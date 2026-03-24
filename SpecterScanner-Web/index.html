@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#0A0A0A">
+  <title>Specter Scanner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ===== SCREEN 1: LAUNCH RITUAL ===== -->
+  <section id="launch-ritual" class="screen active">
+    <div class="crt-overlay"></div>
+    <div id="boot-log" class="boot-log">
+      <!-- Lines injected by JS; static fallback below -->
+    </div>
+    <noscript>
+      <p class="boot-line">&gt; Initializing EMF array...</p>
+      <p class="boot-line">&gt; Calibrating thermal sensors...</p>
+      <p class="boot-line">&gt; Scanning spectral frequencies...</p>
+      <p class="boot-line">&gt; Loading entity database...</p>
+      <p class="boot-line">&gt; Paranormal Detection System ONLINE</p>
+    </noscript>
+  </section>
+
+  <!-- ===== SCREEN 2: SCANNER VIEW ===== -->
+  <section id="scanner-view" class="screen">
+    <!-- Camera feed -->
+    <video id="camera-feed" autoplay playsinline muted></video>
+    <div class="camera-tint-overlay"></div>
+
+    <!-- CRT scanlines -->
+    <div class="crt-overlay"></div>
+
+    <!-- Glitch overlay (activated via JS class toggle) -->
+    <div id="glitch-overlay" class="glitch-overlay"></div>
+
+    <!-- Corner brackets -->
+    <div class="viewfinder-bracket bracket-tl"></div>
+    <div class="viewfinder-bracket bracket-tr"></div>
+    <div class="viewfinder-bracket bracket-bl"></div>
+    <div class="viewfinder-bracket bracket-br"></div>
+
+    <!-- Radar sweep -->
+    <div class="radar-container">
+      <div class="radar-ring radar-ring-1"></div>
+      <div class="radar-ring radar-ring-2"></div>
+      <div class="radar-ring radar-ring-3"></div>
+      <div class="radar-sweep"></div>
+      <div class="radar-crosshair-h"></div>
+      <div class="radar-crosshair-v"></div>
+    </div>
+
+    <!-- HUD: Top-left — label + REC -->
+    <div class="hud hud-top-left">
+      <span class="rec-dot"></span>
+      <span class="rec-label">REC</span>
+      <span class="scanner-label">SPECTER SCANNER</span>
+    </div>
+
+    <!-- HUD: Top-right — timestamp -->
+    <div class="hud hud-top-right">
+      <span id="hud-timestamp">2026-03-24 00:00:00</span>
+    </div>
+
+    <!-- HUD: Bottom-left — EMF meter -->
+    <div class="hud hud-bottom-left">
+      <div class="emf-label">EMF LEVEL</div>
+      <div id="emf-meter" class="emf-meter">
+        <div class="emf-bar" data-index="0"></div>
+        <div class="emf-bar" data-index="1"></div>
+        <div class="emf-bar" data-index="2"></div>
+        <div class="emf-bar" data-index="3"></div>
+        <div class="emf-bar" data-index="4"></div>
+        <div class="emf-bar" data-index="5"></div>
+        <div class="emf-bar" data-index="6"></div>
+        <div class="emf-bar" data-index="7"></div>
+      </div>
+    </div>
+
+    <!-- HUD: Bottom-right — waveform -->
+    <div class="hud hud-bottom-right">
+      <div class="waveform-label">SPECTRAL WAVE</div>
+      <canvas id="waveform-canvas" width="200" height="60"></canvas>
+    </div>
+
+    <!-- HUD: Bottom-center — action buttons -->
+    <div class="hud hud-bottom-center">
+      <button id="btn-case-files" class="hud-btn" type="button">
+        <span class="hud-btn-icon">&#x1F4C1;</span> CASE FILES
+      </button>
+      <button id="btn-scan" class="hud-btn hud-btn-primary" type="button">
+        SCAN
+      </button>
+      <button id="btn-settings" class="hud-btn" type="button">
+        <span class="hud-btn-icon">&#x2699;</span> SETTINGS
+      </button>
+    </div>
+
+    <!-- Hidden canvas for camera snapshots -->
+    <canvas id="snapshot-canvas" class="hidden-canvas"></canvas>
+  </section>
+
+  <!-- ===== SCREEN 3: DETECTION ALERT ===== -->
+  <section id="detection-alert" class="screen">
+    <div class="crt-overlay"></div>
+    <div class="detection-glow"></div>
+    <div class="detection-content">
+      <div class="detection-flash"></div>
+      <h1 class="detection-title glitch-text" data-text="SPECTRAL ENTITY DETECTED">
+        &#x26A0; SPECTRAL ENTITY DETECTED &#x26A0;
+      </h1>
+      <div class="detection-info">
+        <p class="detection-name" id="detection-name">UNKNOWN ENTITY</p>
+        <p class="detection-class" id="detection-class">Class: Residual Haunting</p>
+        <div class="threat-level-container">
+          <span class="threat-label">THREAT LEVEL</span>
+          <div class="threat-bar-track">
+            <div class="threat-bar-fill" id="threat-bar-fill"></div>
+          </div>
+          <span class="threat-value" id="threat-value">7/10</span>
+        </div>
+      </div>
+      <p class="detection-previously-documented hidden" id="detection-documented">
+        &#x1F4CB; PREVIOUSLY DOCUMENTED
+      </p>
+      <button id="btn-view-dossier" class="detection-btn" type="button">
+        TAP TO VIEW CASE FILE
+      </button>
+      <button id="btn-dismiss-alert" class="detection-btn detection-btn-secondary" type="button">
+        RETURN TO SCANNER
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== SCREEN 4: DOLL DOSSIER ===== -->
+  <section id="doll-dossier" class="screen">
+    <div class="dossier-card">
+      <div class="dossier-classified-watermark">CLASSIFIED</div>
+      <div class="dossier-coffee-stain"></div>
+
+      <header class="dossier-header">
+        <span class="dossier-file-label">PARANORMAL CASE FILE</span>
+        <span class="dossier-file-number" id="dossier-file-number">#00-000</span>
+      </header>
+
+      <div class="dossier-photo-frame">
+        <img id="dossier-photo" class="dossier-photo" src="" alt="Entity photograph">
+        <div class="dossier-photo-label">PHOTOGRAPHIC EVIDENCE</div>
+      </div>
+
+      <div class="dossier-details">
+        <h2 class="dossier-name" id="dossier-name">Entity Name</h2>
+
+        <div class="dossier-field">
+          <span class="dossier-field-label">HAUNTING TYPE</span>
+          <span class="dossier-field-value" id="dossier-haunting-type">
+            <span class="dossier-icon" id="dossier-haunting-icon"></span>
+            <span id="dossier-haunting-text">Unknown</span>
+          </span>
+        </div>
+
+        <div class="dossier-field">
+          <span class="dossier-field-label">THREAT LEVEL</span>
+          <span class="dossier-threat-dots" id="dossier-threat-dots">
+            <!-- Filled by JS: 1-10 dots -->
+          </span>
+        </div>
+
+        <div class="dossier-field">
+          <span class="dossier-field-label">ORIGIN</span>
+          <p class="dossier-narrative" id="dossier-origin">Unknown origin.</p>
+        </div>
+
+        <div class="dossier-field">
+          <span class="dossier-field-label">DOCUMENTED ACTIVITY</span>
+          <ul class="dossier-activity-list" id="dossier-activity">
+            <li>No documented activity.</li>
+          </ul>
+        </div>
+
+        <div class="dossier-field">
+          <span class="dossier-field-label">FIRST DETECTED</span>
+          <span class="dossier-field-value" id="dossier-first-detected">--</span>
+        </div>
+
+        <div class="dossier-status-badge" id="dossier-status">ACTIVE</div>
+      </div>
+
+      <button id="btn-close-dossier" class="dossier-close-btn" type="button">
+        &#x2716; CLOSE FILE
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== SCREEN 5: CASE FILES (GRID) ===== -->
+  <section id="case-files" class="screen">
+    <div class="crt-overlay"></div>
+    <header class="case-files-header">
+      <button id="btn-close-cases" class="back-btn" type="button">&#x25C0; BACK</button>
+      <h1 class="case-files-title">CASE FILES</h1>
+      <p class="case-files-counter" id="case-files-counter">0 of 0 Entities Documented</p>
+    </header>
+    <div id="case-files-grid" class="case-files-grid">
+      <!-- Populated by JS. Example card structure: -->
+      <!--
+      <div class="case-card discovered" data-id="doll-01">
+        <div class="case-card-thumb">
+          <img src="..." alt="...">
+        </div>
+        <p class="case-card-name">Annabelle</p>
+        <span class="case-card-threat">&#x25CF;&#x25CF;&#x25CF;&#x25CB;&#x25CB;</span>
+      </div>
+      <div class="case-card undiscovered">
+        <div class="case-card-thumb silhouette">???</div>
+        <p class="case-card-name">UNDETECTED</p>
+      </div>
+      -->
+    </div>
+  </section>
+
+  <!-- ===== SCREEN 6: SETTINGS ===== -->
+  <section id="settings-modal" class="screen modal-screen">
+    <div class="crt-overlay"></div>
+    <div class="modal-backdrop" id="settings-backdrop"></div>
+    <div class="modal-panel">
+      <header class="modal-header">
+        <h2 class="modal-title">SETTINGS</h2>
+        <button id="btn-close-settings" class="modal-close-btn" type="button">&#x2716;</button>
+      </header>
+
+      <div class="settings-section">
+        <h3 class="settings-heading">SCARE LEVEL</h3>
+        <div class="scare-toggle" id="scare-toggle">
+          <button class="scare-option active" data-level="junior" type="button">
+            <span class="scare-option-icon">&#x1F476;</span>
+            <span class="scare-option-label">Junior Investigator</span>
+            <span class="scare-option-desc">Friendly &amp; mild</span>
+          </button>
+          <button class="scare-option" data-level="senior" type="button">
+            <span class="scare-option-icon">&#x1F575;</span>
+            <span class="scare-option-label">Senior Agent</span>
+            <span class="scare-option-desc">Intense &amp; spooky</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3 class="settings-heading">DATA</h3>
+        <button id="btn-reset-all" class="settings-danger-btn" type="button">
+          RESET ALL DISCOVERIES
+        </button>
+        <div id="reset-confirm" class="reset-confirm hidden">
+          <p>Are you sure? All case files will be erased.</p>
+          <button id="btn-reset-yes" class="settings-danger-btn" type="button">YES, ERASE</button>
+          <button id="btn-reset-no" class="settings-cancel-btn" type="button">CANCEL</button>
+        </div>
+      </div>
+
+      <div class="settings-section settings-about">
+        <h3 class="settings-heading">ABOUT</h3>
+        <p class="settings-about-text">
+          <strong>Specter Scanner v1.0</strong><br>
+          Paranormal Detection System<br>
+          <br>
+          Developed by the Bureau of<br>
+          Supernatural Investigations (BSI).<br>
+          <br>
+          <em>"Not responsible for any actual hauntings."</em>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts -->
+  <script src="profiles.js"></script>
+  <script src="audio.js"></script>
+  <script src="scanner.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
